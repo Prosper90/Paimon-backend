@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const Users = require("./model-database/users").Users;
-
+const Projects = require("./model-database/projects").Projects;
 
 
 
@@ -35,7 +35,7 @@ app.get("/",  function(req, res){
 
 
 
-//get user dashboard details
+//get user dashboard details by returning particular user
 app.get("/user/:address",  async function(req, res){
 
 
@@ -53,17 +53,42 @@ app.get("/user/:address",  async function(req, res){
   });
 
 
+//function to make notifications
+const notifyWorker = async (workeraddress) => {
 
+  await Users.findOne({address: workeraddress}, function(err, user){
+ 
+    if(err){
+    return false; 
+    } else {
+
+
+       user.Notification.push({type: "Deposit", message: "Deposit confirmed begin work" });
+
+        
+       user.markModified('Notification');
+       user.save(function(saveerr, saveresult){
+        if(saveerr){
+            return false;
+        } else {
+            return true;
+        }
+    
+    });
+
+}
+ }).clone();
+
+}
 
   
 
   //create a user
-app.post("/user", async function(req, res){
+  app.post("/user", async function(req, res){
 
     //console.log(req.body);
     try{    
-        //console.log(req.body.address);
-        //console.log(req.body.txhash);
+
         let user = new Users({
             type: req.body.type,
             address: req.body.address,
@@ -88,43 +113,47 @@ app.post("/user", async function(req, res){
 
 
 
+
+
     //create a project
    app.post("/user/createproject",  async function(req, res){
 
-    await Users.findOne({address: req.body.address}, function(err, user){
 
-            if(err){
-            return false; 
-            } else {
+          try{    
 
-                //console.log(user);
-                user.projects.push({
-                  id: req.params.id,
-                  status: req.params.status,
-                  employer: req.params.employer,
-                  worker: req.params.worker,
-                  jobdetails: req.params.jobdetails,
-                  amount: req.params.amount,
-                  finisheddate: req.params.finisheddate
-                })
+            let project = new Projects({
+              id: req.params.id,
+              status: req.params.status,
+              employer: req.params.employer,
+              worker: req.params.worker,
+              jobdetails: req.params.jobdetails,
+              amount: req.params.amount,
+              finisheddate: req.params.finisheddate
+            })
 
-                user.Notification.push({type: "Deposit", message: "Deposit confirmed begin work" });
+    
+            project.save();
+            notifyWorker(req.params.worker);
 
-                user.markModified('Projects');
-                user.markModified('Notification');
-                user.save(function(saveerr, saveresult){
-                if(saveerr){
-                    return false;
-                } else {
-                    return true;
-                }
-            
-            });
-       
-       }
-       
-         }).clone();
+            res.send(true);
+
+
+          } catch {
+          res.send(false);
+          }
  
+   });
+
+
+
+
+   //return all projects
+   app.get("/projects",  async function(req, res){
+
+
+    const projects = await Projects.find().clone(); 
+ 
+     res.send({project: projects});
  
    });
 
@@ -134,22 +163,17 @@ app.post("/user", async function(req, res){
     //complete job
     app.post("/user/completejob",  async function(req, res){
 
-      await Users.findOne({address: req.body.address}, function(err, user){
+      await Projects.findOne({id: req.body.id}, function(err, project){
  
              if(err){
              return false; 
              } else {
   
-                user.Projects.map((data, index) => {
 
-                    if(data.id === req.body.id) {
-                        data.status = "done";
-                    }
+                 project.status = "done";
 
-                 })
 
-                 user.markModified('Projects');
-                 user.save(function(saveerr, saveresult){
+                 project.save(function(saveerr, saveresult){
                  if(saveerr){
                      return false;
                  } else {

@@ -13,8 +13,10 @@ mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/Paimon",
 
 
 
+
+
+
 //for projects
-/*
 const projectSchema = mongoose.Schema({
     dateandtime : {type: Date, default: Date.now},
     id: {type: Number},
@@ -25,30 +27,11 @@ const projectSchema = mongoose.Schema({
     amount: {type: Number},
     finisheddate: {type: Date}
   });
-*/
-
-
-  //for notifications
-  const noificationSchema = mongoose.Schema({
-    dateandtime : {type: Date, default: Date.now},
-    type: {type: String},
-    message: {type: String}
-  });
-  
 
 
 
-//for users collection
-const userSchema = mongoose.Schema({
-    dateandtime : {type: Date, default: Date.now},
-    type: {type: String},
-    address: {type: String},
-    jobskill: {type: String},
-    revenue: {type: Number},
-    Notification: [noificationSchema]
-});
 
 
  module.exports = {
-   Users: mongoose.model("userSchema", userSchema),
+   Projects: mongoose.model("Projects", projectSchema),
  }
